@@ -1,0 +1,172 @@
+import React from 'react';
+import { CardContent, CardHeader } from '@/components/ui/card';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { QuizDetailsUI } from '@/types/test-session';
+import Btn from '../reusable/button/Btn';
+import { cn } from '@/lib/utils';
+import { CircularProgress } from '../progress-10';
+import CorrectIcon from '../reusable/icons/CorrectIcon';
+import WrongIcon from '../reusable/icons/WrongIcon';
+
+interface QuestionCardProps {
+  quizDetails: QuizDetailsUI;
+  selectedAnswerId: string | null;
+  showExplanation: boolean;
+  isUserCorrect: boolean;
+  onAnswerChange: (value: string) => void;
+  onSubmit: () => void;
+  onToggleHide: () => void;
+  isQuestionHidden: boolean;
+}
+
+const QuestionCard: React.FC<QuestionCardProps> = ({
+  quizDetails,
+  selectedAnswerId,
+  showExplanation,
+  isUserCorrect,
+  onAnswerChange,
+  onSubmit,
+  onToggleHide,
+  isQuestionHidden,
+  
+}) => {
+  console.log(quizDetails);
+  return (
+    <div className="w-full bg-[#f9f9f5] md:my-8 md:p-[32px] rounded-[16px]">
+      {showExplanation && (
+        <div className="mb-4">
+          <Btn
+            text={isQuestionHidden ? 'Show Question' : 'Hide Question'}
+            onClick={onToggleHide}
+            className="bg-[#b79e6b] text-white px-6 py-2 text-sm font-semibold cursor-pointer"
+          />
+        </div>
+      )}
+
+      <CardHeader>
+        <p className="text-sm md:text-[20px] text-gray-700 leading-relaxed font-normal">
+          {quizDetails?.question_title} {quizDetails?.question_steam}
+        </p>
+      </CardHeader>
+
+      <CardContent className="space-y-4">
+        {/* OPTIONS */}
+        <RadioGroup
+          value={selectedAnswerId ?? undefined}
+          onValueChange={onAnswerChange}
+          className="space-y-4"
+        >
+          {quizDetails.answerOptions.map(option => {
+            const isCorrect = option.id === quizDetails.correctAnswerId;
+            const isSelected = option.id === selectedAnswerId;
+            const isWrongSelected = showExplanation && isSelected && !isCorrect;
+
+            return (
+              <div
+                key={option.id}
+                className={cn(
+                  'relative flex items-center justify-between p-3 rounded-xl border border-[#00000026] transition-all',
+                  showExplanation &&
+                    isCorrect &&
+                    'bg-green-100 border-green-500',
+                  isWrongSelected && 'bg-red-100 border-red-500',
+                  !showExplanation && 'bg-gray-50 hover:bg-gray-100',
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <RadioGroupItem
+                    varient="default"
+                    value={option.id}
+                    id={`option-${option.id}`}
+                    disabled={showExplanation}
+                  />
+
+                  <Label
+                    htmlFor={`option-${option.id}`}
+                    className={cn(
+                      'cursor-pointer text-xs md:text-base',
+                      showExplanation &&
+                        !isCorrect &&
+                        isUserCorrect &&
+                        'opacity-60 line-through',
+                    )}
+                  >
+                    <span className="font-bold mr-2">{option.id}.</span>
+                    {option.option_text}
+                  </Label>
+                </div>
+
+                {showExplanation && (
+                  <CircularProgress
+                    showLabel
+                    value={option.percentage ?? 0}
+                    className="text-sm md:text-md font-semibold text-gray-600"
+                  />
+                )}
+              </div>
+            );
+          })}
+        </RadioGroup>
+
+        {/* RESULT BOX */}
+        {showExplanation && (
+          <div
+            className={cn(
+              'mt-6 border-l-[4px] p-[16px] rounded-[12px]',
+              isUserCorrect
+                ? 'border-green-500 bg-green-50'
+                : 'border-red-500 bg-red-50',
+            )}
+          >
+            <CardContent className="flex items-center justify-between">
+              <div className="font-bold text-lg">
+                {isUserCorrect ? (
+                  <h4 className="text-[#20AC19] flex items-center gap-2 text-xs md:text-sm">
+                    <CorrectIcon /> Correct ({quizDetails.correctAnswerId})
+                  </h4>
+                ) : (
+                  <h4 className="text-red-600 flex gap-2 items-center text-xs md:text-sm">
+                    <WrongIcon /> Wrong Answer
+                  </h4>
+                )}
+              </div>
+
+              {!isUserCorrect && (
+                <div className="text-xs md:text-sm text-gray-600">
+                  <p className="flex items-center gap-2 font-semibold text-[#20AC19]">
+                    <CorrectIcon /> Correct Answer:{' '}
+                    {quizDetails.correctAnswerId}
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </div>
+        )}
+
+        {/* ACTION BUTTONS */}
+        <div className="md:flex justify-between items-center space-y-2 md:space-y-0">
+          <Btn
+            text="Submit Answer"
+            onClick={onSubmit}
+            disabled={!selectedAnswerId || showExplanation}
+            className={cn(
+              'bg-[#01281e] text-white w-full md:w-[164px] h-[50px] text-md font-semibold',
+              showExplanation
+                ? 'cursor-not-allowed opacity-60'
+                : 'cursor-pointer',
+            )}
+          />
+
+          {/* Submit Test should be handled by parent, not hardcoded */}
+          <Btn
+            text="Submit Test"
+            className="bg-[#b79e6b] text-sm w-full md:w-[164px] h-[50px] text-white font-semibold"
+          />
+        </div>
+      </CardContent>
+    </div>
+  );
+};
+
+export default QuestionCard;
